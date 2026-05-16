@@ -121,16 +121,16 @@ export default function TileStackGame() {
     const t = bgTickRef.current;
 
     const grad = ctx.createLinearGradient(0, 0, CANVAS_W, CANVAS_H);
-    grad.addColorStop(0, `hsl(${(t * 30) % 360},70%,8%)`);
-    grad.addColorStop(0.5, `hsl(${(t * 30 + 120) % 360},60%,10%)`);
-    grad.addColorStop(1, `hsl(${(t * 30 + 240) % 360},70%,7%)`);
+    grad.addColorStop(0, \`hsl(\${(t * 30) % 360},70%,8%)\`);
+    grad.addColorStop(0.5, \`hsl(\${(t * 30 + 120) % 360},60%,10%)\`);
+    grad.addColorStop(1, \`hsl(\${(t * 30 + 240) % 360},70%,7%)\`);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
 
     STARS.forEach(star => {
       ctx.beginPath();
       ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${star.a * 0.6 + Math.sin(t * 3 + star.x) * 0.2})`;
+      ctx.fillStyle = \`rgba(255,255,255,\${star.a * 0.6 + Math.sin(t * 3 + star.x) * 0.2})\`;
       ctx.fill();
     });
 
@@ -170,7 +170,7 @@ export default function TileStackGame() {
       const y = CANVAS_H - BASE_H - (s.stack.length + 1) * TILE_H;
       drawTile(ctx, mt.x, y, mt.w, TILE_H, mt.grad, 0.95);
       const pulse = 0.5 + Math.sin(Date.now() * 0.008) * 0.5;
-      ctx.fillStyle = `rgba(255,255,255,${pulse})`;
+      ctx.fillStyle = \`rgba(255,255,255,\${pulse})\`;
       ctx.font = "bold 11px monospace";
       ctx.textAlign = "center";
       ctx.fillText("▼ TAP ▼", CANVAS_W / 2, y - 9);
@@ -182,11 +182,11 @@ export default function TileStackGame() {
     ctx.fillStyle = "#ffffff";
     ctx.font = "bold 26px 'Courier New', monospace";
     ctx.textAlign = "left";
-    ctx.fillText(`✦ ${s.stack.length}`, 14, 40);
+    ctx.fillText(\`✦ \${s.stack.length}\`, 14, 40);
     ctx.shadowBlur = 0;
     ctx.fillStyle = "rgba(255,220,100,0.7)";
     ctx.font = "11px 'Courier New', monospace";
-    ctx.fillText(`BEST  ${s.best}`, 14, 60);
+    ctx.fillText(\`BEST  \${s.best}\`, 14, 60);
     ctx.restore();
   }, [drawTile]);
 
@@ -266,12 +266,12 @@ export default function TileStackGame() {
       bgTickRef.current += 0.004;
       const t = bgTickRef.current;
       const g = ctx.createLinearGradient(0, 0, CANVAS_W, CANVAS_H);
-      g.addColorStop(0, `hsl(${(t*30)%360},70%,8%)`);
-      g.addColorStop(1, `hsl(${(t*30+180)%360},60%,10%)`);
+      g.addColorStop(0, \`hsl(\${(t*30)%360},70%,8%)\`);
+      g.addColorStop(1, \`hsl(\${(t*30+180)%360},60%,10%)\`);
       ctx.fillStyle = g; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
       STARS.forEach(star => {
         ctx.beginPath(); ctx.arc(star.x, star.y, star.r, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(255,255,255,${star.a*0.5+Math.sin(t*3+star.x)*0.2})`; ctx.fill();
+        ctx.fillStyle = \`rgba(255,255,255,\${star.a*0.5+Math.sin(t*3+star.x)*0.2})\`; ctx.fill();
       });
       [{ x:40,w:280 },{ x:55,w:250 },{ x:70,w:210 },{ x:90,w:165 },{ x:110,w:120 }].forEach((tile,i)=>{
         const y = CANVAS_H - BASE_H - (i+1)*TILE_H;
@@ -305,7 +305,7 @@ export default function TileStackGame() {
       const scoreHex = score.toString(16).padStart(64, "0");
       await window.ethereum.request({
         method: "eth_sendTransaction",
-        params: [{ from: walletAddr, to: CONTRACT_ADDRESS, data: selector + scoreHex, gas: "0x30000" }],
+        params: [{ from: walletAddr, to: CONTRACT_ADDRESS, data: selector + scoreHex, gas: "0x50000" }],
       });
       setTxStatus("done");
     } catch (e) { console.error(e); setTxStatus("error"); }
@@ -463,12 +463,11 @@ const overlayStyle = {
 
 function glowBtn(c1, c2) {
   return {
-    background:`linear-gradient(135deg,${c1},${c2})`,
+    background:\`linear-gradient(135deg,\${c1},\${c2})\`,
     border:"none", borderRadius:8, color:"#fff",
     fontFamily:"'Courier New',monospace", fontWeight:"bold", fontSize:13,
     letterSpacing:"0.1em", padding:"10px 22px", cursor:"pointer",
-    boxShadow:`0 0 22px ${c1}66, 0 2px 8px rgba(0,0,0,0.4)`,
+    boxShadow:\`0 0 22px \${c1}66, 0 2px 8px rgba(0,0,0,0.4)\`,
     transition:"transform 0.1s",
   };
 }
-
