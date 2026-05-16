@@ -15,9 +15,18 @@ const config = createConfig({
   connectors: [
     injected(),
     coinbaseWallet({ appName: "Tile Stack", preference: "all" }),
-    walletConnect({ projectId }),
+    walletConnect({
+      projectId,
+      metadata: {
+        name: "Tile Stack",
+        description: "Stack tiles on-chain leaderboard game",
+        url: "https://tile-stack.vercel.app",
+        icons: ["https://tile-stack.vercel.app/vite.svg"],
+      },
+      showQrModal: true,
+    }),
   ],
-  transports: { [base.id]: http() },
+  transports: { [base.id]: http("https://mainnet.base.org") },
 });
 
 const queryClient = new QueryClient();
