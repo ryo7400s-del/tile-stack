@@ -1,6 +1,4 @@
-import sys
-
-content = r"""import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 const CONTRACT_SOURCE = `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
@@ -473,8 +471,3 @@ function glowBtn(c1, c2) {
     transition:"transform 0.1s",
   };
 }
-"""
-
-with open("src/App.jsx", "w") as f:
-    f.write(content)
-print("✓ App.jsx written successfully")
