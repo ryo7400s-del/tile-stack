@@ -35,7 +35,7 @@ const STARS = Array.from({ length: 60 }, () => ({
 
 // ABI encode: submitScore(uint256 score, string nickname)
 function encodeSubmitScore(score, nickname) {
-  const selector = "0x5f5f6d24"; // keccak256("submitScore(uint256,string)") first 4 bytes
+  const selector = "0x643270c5"; // keccak256("submitScore(uint256,string)") first 4 bytes
   const scoreHex = BigInt(score).toString(16).padStart(64, "0");
   const offsetHex = (64).toString(16).padStart(64, "0"); // offset to string = 0x40
   const nicknameBytes = new TextEncoder().encode(nickname);
