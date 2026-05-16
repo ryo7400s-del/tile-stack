@@ -470,4 +470,4 @@ function glowBtn(c1, c2) {
     boxShadow:`0 0 22px ${c1}66, 0 2px 8px rgba(0,0,0,0.4)`,
     transition:"transform 0.1s",
   };
-            }
+                           }
