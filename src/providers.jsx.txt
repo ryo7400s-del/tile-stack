@@ -1,0 +1,42 @@
+import { OnchainKitProvider } from "@coinbase/onchainkit";
+import { base } from "wagmi/chains";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { WagmiProvider, createConfig, http } from "wagmi";
+import { walletConnect, injected, coinbaseWallet } from "wagmi/connectors";
+
+const projectId = "50b53d7f5ff3f9833c6d53f7a8d751d3";
+
+const metadata = {
+  name: "Tile Stack",
+  description: "Stack tiles on-chain leaderboard game",
+  url: "https://tile-stack.vercel.app",
+  icons: ["https://tile-stack.vercel.app/vite.svg"],
+};
+
+const wagmiConfig = createConfig({
+  chains: [base],
+  connectors: [
+    injected(),
+    coinbaseWallet({ appName: "Tile Stack", preference: "all" }),
+    walletConnect({ projectId, metadata, showQrModal: true }),
+  ],
+  transports: { [base.id]: http("https://mainnet.base.org") },
+});
+
+const queryClient = new QueryClient();
+
+export function Providers({ children }) {
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <OnchainKitProvider
+          apiKey={import.meta.env.VITE_ONCHAINKIT_API_KEY}
+          chain={base}
+          config={{ appearance: { name: "Tile Stack" } }}
+        >
+          {children}
+        </OnchainKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
+  );
+}
