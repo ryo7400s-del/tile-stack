@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect } from "wagmi";
 import { encodeFunctionData } from "viem";
+import { Attribution } from "ox";
 import { base } from "wagmi/chains";
 import { coinbaseWallet, walletConnect, injected } from "wagmi/connectors";
 
@@ -10,6 +11,7 @@ const BASE_H = 30;
 const TILE_H = 26;
 const SPEED_INIT = 2.2;
 const SPEED_INC = 0.18;
+const BUILDER_CODE = "bc_d72tk19i";
 
 const TILE_GRADIENTS = [
   ["#FF6B6B","#FF1744"],["#FF9A3C","#FF6D00"],["#FFE033","#FFB300"],
@@ -93,11 +95,18 @@ function WalletSection({ score, nickname, setNickname }) {
     try {
       const wc = await getWallet();
       if (!wc) { alert("繧ｦ繧ｩ繝ｬ繝�ヨ繧呈磁邯壹＠縺ｦ縺上□縺輔＞"); setTxStatus(""); return; }
-      const data = encodeFunctionData({
+
+      // ABI繧ｨ繝ｳ繧ｳ繝ｼ繝�
+      const baseData = encodeFunctionData({
         abi: CONTRACT_ABI,
         functionName: "submitScore",
         args: [BigInt(score), nickname.trim()],
       });
+
+      // ERC-8021 Attribution suffix 繧定ｿｽ蜉�
+      const suffix = Attribution.toDataSuffix({ builderCode: BUILDER_CODE });
+      const data = (baseData + suffix.slice(2));
+
       await wc.sendTransaction({
         to: CONTRACT_ADDRESS,
         data,
@@ -440,4 +449,4 @@ function glowBtn(c1, c2) {
     fontWeight: "bold", fontSize: 13, padding: "10px 22px", cursor: "pointer",
     boxShadow: "0 0 22px " + c1 + "66, 0 2px 8px rgba(0,0,0,0.4)",
   };
-        }
+  }
