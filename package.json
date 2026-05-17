@@ -13,6 +13,7 @@
   "dependencies": {
     "@coinbase/onchainkit": "^1.1.2",
     "ethers": "^6.16.0",
+    "ox": "^0.14.21",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
