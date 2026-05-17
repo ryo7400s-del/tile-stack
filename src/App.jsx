@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect } from "wagmi";
 import { encodeFunctionData } from "viem";
-import { Attribution } from "ox/core";
 import { base } from "wagmi/chains";
 import { coinbaseWallet, walletConnect, injected } from "wagmi/connectors";
 
@@ -29,6 +28,16 @@ const CONTRACT_ABI = [{
 
 const PROJECT_ID = "50b53d7f5ff3f9833c6d53f7a8d751d3";
 
+// ERC-8021 Attribution suffix
+function addAttribution(data) {
+  const encoded = new TextEncoder().encode(BUILDER_CODE);
+  const hex = Array.from(encoded).map(b => b.toString(16).padStart(2, "0")).join("");
+  const magic = "FAEC";
+  const version = "0001";
+  const suffix = magic + version + hex.padEnd(64, "0");
+  return data + suffix;
+}
+
 function pickGrad(idx) { return TILE_GRADIENTS[idx % TILE_GRADIENTS.length]; }
 
 const STARS = Array.from({ length: 60 }, () => ({
@@ -49,26 +58,26 @@ function ConnectModal({ onClose }) {
         borderRadius: 16, padding: 24, width: 280, textAlign: "center",
       }}>
         <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 20, color: "#fff" }}>
-          繧ｦ繧ｩ繝ｬ繝�ヨ繧帝∈謚�
+          Select Wallet
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
           <button style={walletBtn("#4D96FF")}
             onClick={() => { connect({ connector: injected() }); onClose(); }}>
-            ｦ� MetaMask / Brave / Rabby
+            MetaMask / Brave / Rabby
           </button>
           <button style={walletBtn("#0052FF")}
             onClick={() => { connect({ connector: coinbaseWallet({ appName: "Tile Stack", preference: "all" }) }); onClose(); }}>
-            鳩 Coinbase Wallet
+            Coinbase Wallet
           </button>
           <button style={walletBtn("#3B99FC")}
             onClick={() => { connect({ connector: walletConnect({ projectId: PROJECT_ID }) }); onClose(); }}>
-            迫 WalletConnect
+            WalletConnect
           </button>
         </div>
         <button onClick={onClose} style={{
           background: "none", border: "none", color: "rgba(255,255,255,0.4)",
           cursor: "pointer", fontSize: 12,
-        }}>繧ｭ繝｣繝ｳ繧ｻ繝ｫ</button>
+        }}>Cancel</button>
       </div>
     </div>
   );
@@ -90,23 +99,17 @@ function WalletSection({ score, nickname, setNickname }) {
   }
 
   const handleSubmit = async () => {
-    if (!nickname.trim()) { alert("繝九ャ繧ｯ繝阪�繝�繧貞�蜉帙＠縺ｦ縺上□縺輔＞"); return; }
+    if (!nickname.trim()) { alert("Please enter a nickname"); return; }
     setTxStatus("pending");
     try {
       const wc = await getWallet();
-      if (!wc) { alert("繧ｦ繧ｩ繝ｬ繝�ヨ繧呈磁邯壹＠縺ｦ縺上□縺輔＞"); setTxStatus(""); return; }
-
-      // ABI繧ｨ繝ｳ繧ｳ繝ｼ繝�
+      if (!wc) { alert("Please connect wallet"); setTxStatus(""); return; }
       const baseData = encodeFunctionData({
         abi: CONTRACT_ABI,
         functionName: "submitScore",
         args: [BigInt(score), nickname.trim()],
       });
-
-      // ERC-8021 Attribution suffix 繧定ｿｽ蜉�
-      const suffix = Attribution.toDataSuffix({ builderCode: BUILDER_CODE });
-      const data = (baseData + suffix.slice(2));
-
+      const data = addAttribution(baseData);
       await wc.sendTransaction({
         to: CONTRACT_ADDRESS,
         data,
@@ -134,31 +137,32 @@ function WalletSection({ score, nickname, setNickname }) {
         }}>ON-CHAIN SUBMIT</div>
 
         <input value={nickname} onChange={e => setNickname(e.target.value.slice(0, 12))}
-          placeholder="繝九ャ繧ｯ繝阪�繝�" style={inputStyle} />
+          placeholder="Nickname" style={inputStyle} />
 
         {!isConnected ? (
           <button style={glowBtn("#4D96FF", "#7B61FF")} onClick={() => setShowModal(true)}>
-            繧ｦ繧ｩ繝ｬ繝�ヨ謗･邯�
+            Connect Wallet
           </button>
         ) : isWrongNetwork ? (
           <div>
             <div style={{ fontSize: 11, color: "#FF6B6B", marginBottom: 8 }}>
-              笞��� Base 縺ｫ蛻�ｊ譖ｿ縺医※縺上□縺輔＞
+              Switch to Base network
             </div>
             <button style={glowBtn("#FF6B6B", "#FF1744")}
               onClick={() => switchChain({ chainId: base.id })}
               disabled={isSwitching}>
-              {isSwitching ? "蛻�崛荳ｭ..." : "Base 縺ｫ蛻�ｊ譖ｿ縺医ｋ"}
+              {isSwitching ? "Switching..." : "Switch to Base"}
             </button>
           </div>
         ) : txStatus === "done" ? (
-          <div style={{ fontSize: 12, color: "#6BCB77" }}>笨� 逋ｻ骭ｲ貂医∩��</div>
+          <div style={{ fontSize: 12, color: "#6BCB77" }}>Score registered!</div>
         ) : (
           <div>
             <div style={{ fontSize: 10, color: "#4CC9F0", marginBottom: 8 }}>
               {address.slice(0, 6)}...{address.slice(-4)}
-              <span onClick={() => disconnect()} style={{ marginLeft: 8, color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 9 }}>
-                蛻�妙
+              <span onClick={() => disconnect()}
+                style={{ marginLeft: 8, color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: 9 }}>
+                Disconnect
               </span>
             </div>
             <button
@@ -166,7 +170,7 @@ function WalletSection({ score, nickname, setNickname }) {
               onClick={txStatus === "error" ? () => setTxStatus("") : handleSubmit}
               disabled={txStatus === "pending"}
             >
-              {txStatus === "pending" ? "騾∽ｿ｡荳ｭ..." : txStatus === "error" ? "螟ｱ謨� 蜀崎ｩｦ陦�" : "繧ｹ繧ｳ繧｢繧堤匳骭ｲ 噫"}
+              {txStatus === "pending" ? "Sending..." : txStatus === "error" ? "Retry" : "Register Score"}
             </button>
           </div>
         )}
@@ -379,13 +383,13 @@ export default function TileStackGame() {
           <div style={overlayStyle}>
             <div style={{ fontSize: 40, marginBottom: 6 }}>醇</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.65)", marginBottom: 6 }}>
-              繧ｿ繧､繝ｫ繧帝㍾縺ｭ縺ｦ鬮倥＆繧堤ｫｶ縺�
+              Stack tiles as high as possible!
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>
-              繧ｺ繝ｬ縺滄Κ蛻��繧ｫ繝�ヨ 竊� 螳悟�繝溘せ縺ｧ繧ｲ繝ｼ繝�繧ｪ繝ｼ繝舌�
+              Misaligned parts are cut. Miss completely = Game Over
             </div>
             <input value={nickname} onChange={e => setNickname(e.target.value.slice(0, 12))}
-              placeholder="繝九ャ繧ｯ繝阪�繝�" style={inputStyle} />
+              placeholder="Nickname" style={inputStyle} />
             <button style={glowBtn("#4D96FF", "#7B61FF")} onClick={startGame}>START GAME</button>
           </div>
         )}
@@ -413,7 +417,7 @@ export default function TileStackGame() {
 
       {phase === "playing" && (
         <div style={{ marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.4)" }}>
-          繧ｿ繝�� / 繧ｯ繝ｪ繝�け / 繧ｹ繝壹�繧ｹ 縺ｧ DROP
+          Tap / Click / Space to DROP
         </div>
       )}
     </div>
@@ -449,4 +453,4 @@ function glowBtn(c1, c2) {
     fontWeight: "bold", fontSize: 13, padding: "10px 22px", cursor: "pointer",
     boxShadow: "0 0 22px " + c1 + "66, 0 2px 8px rgba(0,0,0,0.4)",
   };
-  }
+          }
