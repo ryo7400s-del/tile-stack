@@ -3,6 +3,7 @@ import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect 
 import { encodeFunctionData } from "viem";
 import { base } from "wagmi/chains";
 import { coinbaseWallet, walletConnect, injected } from "wagmi/connectors";
+import { addERC8021Attribution } from "./attribution.js";
 
 const CANVAS_W = 360;
 const CANVAS_H = 540;
@@ -10,7 +11,6 @@ const BASE_H = 30;
 const TILE_H = 26;
 const SPEED_INIT = 2.2;
 const SPEED_INC = 0.18;
-const BUILDER_CODE = "bc_d72tk19i";
 
 const TILE_GRADIENTS = [
   ["#FF6B6B","#FF1744"],["#FF9A3C","#FF6D00"],["#FFE033","#FFB300"],
@@ -27,16 +27,6 @@ const CONTRACT_ABI = [{
 }];
 
 const PROJECT_ID = "50b53d7f5ff3f9833c6d53f7a8d751d3";
-
-// ERC-8021 Attribution suffix
-function addAttribution(data) {
-  const encoded = new TextEncoder().encode(BUILDER_CODE);
-  const hex = Array.from(encoded).map(b => b.toString(16).padStart(2, "0")).join("");
-  const magic = "FAEC";
-  const version = "0001";
-  const suffix = magic + version + hex.padEnd(64, "0");
-  return data + suffix;
-}
 
 function pickGrad(idx) { return TILE_GRADIENTS[idx % TILE_GRADIENTS.length]; }
 
@@ -109,7 +99,7 @@ function WalletSection({ score, nickname, setNickname }) {
         functionName: "submitScore",
         args: [BigInt(score), nickname.trim()],
       });
-      const data = addAttribution(baseData);
+      const data = addERC8021Attribution(baseData);
       await wc.sendTransaction({
         to: CONTRACT_ADDRESS,
         data,
@@ -386,7 +376,7 @@ export default function TileStackGame() {
               Stack tiles as high as possible!
             </div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>
-              Misaligned parts are cut. Miss completely = Game Over
+              Misaligned parts are cut. Miss = Game Over
             </div>
             <input value={nickname} onChange={e => setNickname(e.target.value.slice(0, 12))}
               placeholder="Nickname" style={inputStyle} />
@@ -453,4 +443,4 @@ function glowBtn(c1, c2) {
     fontWeight: "bold", fontSize: 13, padding: "10px 22px", cursor: "pointer",
     boxShadow: "0 0 22px " + c1 + "66, 0 2px 8px rgba(0,0,0,0.4)",
   };
-          }
+                  }
