@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { encodeFunctionData } from "viem";
 import { base } from "wagmi/chains";
 import { coinbaseWallet, walletConnect, injected } from "wagmi/connectors";
@@ -20,11 +20,26 @@ const TILE_GRADIENTS = [
 ];
 
 const CONTRACT_ADDRESS = "0xc1b52710776230Cb22c5709Ea06Ce1901B4Db56B";
-const CONTRACT_ABI = [{
-  name: "submitScore", type: "function", stateMutability: "nonpayable",
-  inputs: [{ name: "score", type: "uint256" }, { name: "nickname", type: "string" }],
-  outputs: [],
-}];
+const CONTRACT_ABI = [
+  {
+    name: "submitScore", type: "function", stateMutability: "nonpayable",
+    inputs: [{ name: "score", type: "uint256" }, { name: "nickname", type: "string" }],
+    outputs: [],
+  },
+  {
+    name: "getLeaderboard", type: "function", stateMutability: "view",
+    inputs: [{ name: "limit", type: "uint256" }],
+    outputs: [{
+      type: "tuple[]",
+      components: [
+        { name: "player", type: "address" },
+        { name: "score", type: "uint256" },
+        { name: "timestamp", type: "uint256" },
+        { name: "nickname", type: "string" },
+      ],
+    }],
+  },
+];
 
 const PROJECT_ID = "50b53d7f5ff3f9833c6d53f7a8d751d3";
 
@@ -34,6 +49,101 @@ const STARS = Array.from({ length: 60 }, () => ({
   x: Math.random() * CANVAS_W, y: Math.random() * CANVAS_H,
   r: Math.random() * 1.2 + 0.3, a: Math.random(),
 }));
+
+// Leaderboard component
+function Leaderboard({ onClose }) {
+  const { data, isLoading, error } = useReadContract({
+    address: CONTRACT_ADDRESS,
+    abi: CONTRACT_ABI,
+    functionName: "getLeaderboard",
+    args: [10n],
+    chainId: base.id,
+  });
+
+  const medals = ["🥇","🥈","🥉"];
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 2000,
+      background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      padding: 16,
+    }}>
+      <div style={{
+        background: "linear-gradient(135deg,#0d0520,#1a0a2e)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        borderRadius: 16, padding: 20, width: "100%", maxWidth: 360,
+        maxHeight: "80vh", overflowY: "auto",
+      }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <div style={{
+            fontSize: 16, fontWeight: "bold",
+            background: "linear-gradient(90deg,#FFC93C,#FF8E53)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+          }}>🏆 LEADERBOARD</div>
+          <button onClick={onClose} style={{
+            background: "none", border: "none", color: "rgba(255,255,255,0.5)",
+            cursor: "pointer", fontSize: 20,
+          }}>✕</button>
+        </div>
+
+        {isLoading && (
+          <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: 20 }}>
+            Loading...
+          </div>
+        )}
+
+        {error && (
+          <div style={{ textAlign: "center", color: "#FF6B6B", padding: 20, fontSize: 12 }}>
+            Failed to load. Check network.
+          </div>
+        )}
+
+        {data && data.length === 0 && (
+          <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: 20 }}>
+            No records yet. Be the first!
+          </div>
+        )}
+
+        {data && data.map((entry, i) => (
+          <div key={i} style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "10px 12px", marginBottom: 6, borderRadius: 10,
+            background: i === 0 ? "rgba(255,215,0,0.15)"
+              : i === 1 ? "rgba(192,192,192,0.1)"
+              : i === 2 ? "rgba(205,127,50,0.1)"
+              : "rgba(255,255,255,0.04)",
+            border: "1px solid " + (i === 0 ? "rgba(255,215,0,0.3)"
+              : i === 1 ? "rgba(192,192,192,0.2)"
+              : i === 2 ? "rgba(205,127,50,0.2)"
+              : "rgba(255,255,255,0.06)"),
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontSize: 18, minWidth: 28 }}>
+                {medals[i] || (i + 1) + "."}
+              </span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: "bold", color: "#fff" }}>
+                  {entry.nickname || "Anonymous"}
+                </div>
+                <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)" }}>
+                  {entry.player.slice(0, 6)}...{entry.player.slice(-4)}
+                </div>
+              </div>
+            </div>
+            <div style={{
+              fontSize: 22, fontWeight: 900,
+              background: "linear-gradient(180deg,#fff,#FFC93C)",
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+            }}>
+              {entry.score.toString()}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function ConnectModal({ onClose }) {
   const { connect } = useConnect();
@@ -100,11 +210,7 @@ function WalletSection({ score, nickname, setNickname }) {
         args: [BigInt(score), nickname.trim()],
       });
       const data = addERC8021Attribution(baseData);
-      await wc.sendTransaction({
-        to: CONTRACT_ADDRESS,
-        data,
-        chain: base,
-      });
+      await wc.sendTransaction({ to: CONTRACT_ADDRESS, data, chain: base });
       setTxStatus("done");
     } catch (e) {
       console.error(e);
@@ -179,6 +285,7 @@ export default function TileStackGame() {
   const [score, setScore] = useState(0);
   const [bestLocal, setBestLocal] = useState(0);
   const [nickname, setNickname] = useState("");
+  const [showBoard, setShowBoard] = useState(false);
 
   const drawTile = useCallback((ctx, x, y, w, h, gc, alpha = 1) => {
     if (w <= 0) return;
@@ -290,7 +397,7 @@ export default function TileStackGame() {
       phase: "playing", stack: [], best: bestLocal,
       moving: { x: -80, w: CANVAS_W * 0.55, dir: 1, speed: SPEED_INIT, grad: pickGrad(0) },
     };
-    setPhase("playing"); setScore(0);
+    setPhase("playing"); setScore(0); setShowBoard(false);
     rafRef.current = requestAnimationFrame(tick);
   }, [tick, bestLocal]);
 
@@ -347,6 +454,8 @@ export default function TileStackGame() {
       display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
       fontFamily: "monospace", color: "#fff", padding: "16px",
     }}>
+      {showBoard && <Leaderboard onClose={() => setShowBoard(false)} />}
+
       <div style={{ marginBottom: 14, textAlign: "center" }}>
         <div style={{
           fontSize: 30, fontWeight: "900", letterSpacing: "0.2em",
@@ -371,16 +480,19 @@ export default function TileStackGame() {
 
         {phase === "idle" && (
           <div style={overlayStyle}>
-            <div style={{ fontSize: 40, marginBottom: 6 }}>醇</div>
+            <div style={{ fontSize: 40, marginBottom: 6 }}>🏆</div>
             <div style={{ fontSize: 14, color: "rgba(255,255,255,0.65)", marginBottom: 6 }}>
               Stack tiles as high as possible!
             </div>
-            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 20 }}>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.3)", marginBottom: 16 }}>
               Misaligned parts are cut. Miss = Game Over
             </div>
             <input value={nickname} onChange={e => setNickname(e.target.value.slice(0, 12))}
               placeholder="Nickname" style={inputStyle} />
-            <button style={glowBtn("#4D96FF", "#7B61FF")} onClick={startGame}>START GAME</button>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={glowBtn("#4D96FF", "#7B61FF")} onClick={startGame}>START</button>
+              <button style={glowBtn("#FFC93C", "#FF8E53")} onClick={() => setShowBoard(true)}>RANKING</button>
+            </div>
           </div>
         )}
 
@@ -400,7 +512,10 @@ export default function TileStackGame() {
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>TILES STACKED</div>
             <div style={{ fontSize: 13, color: "#FFC93C", marginBottom: 16 }}>BEST {bestLocal}</div>
             <WalletSection score={score} nickname={nickname} setNickname={setNickname} />
-            <button style={glowBtn("#4D96FF", "#2962FF")} onClick={startGame}>RETRY</button>
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={glowBtn("#4D96FF", "#2962FF")} onClick={startGame}>RETRY</button>
+              <button style={glowBtn("#FFC93C", "#FF8E53")} onClick={() => setShowBoard(true)}>RANKING</button>
+            </div>
           </div>
         )}
       </div>
@@ -443,4 +558,4 @@ function glowBtn(c1, c2) {
     fontWeight: "bold", fontSize: 13, padding: "10px 22px", cursor: "pointer",
     boxShadow: "0 0 22px " + c1 + "66, 0 2px 8px rgba(0,0,0,0.4)",
   };
-                  }
+}
