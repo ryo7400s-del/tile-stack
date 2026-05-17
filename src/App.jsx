@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect } from "wagmi";
 import { encodeFunctionData } from "viem";
-import { Attribution } from "ox";
+import { Attribution } from "ox/core";
 import { base } from "wagmi/chains";
 import { coinbaseWallet, walletConnect, injected } from "wagmi/connectors";
 
