@@ -3,6 +3,8 @@ import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect,
 import { encodeFunctionData } from "viem";
 import { base } from "wagmi/chains";
 import { coinbaseWallet, walletConnect, injected } from "wagmi/connectors";
+import { farcasterMiniApp } from "@farcaster/miniapp-wagmi-connector";
+import sdk from "@farcaster/miniapp-sdk";
 import { addERC8021Attribution } from "./attribution.js";
 
 const CANVAS_W = 360;
@@ -61,35 +63,17 @@ function Leaderboard({ onClose }) {
   });
   const medals = ["🥇","🥈","🥉"];
   return (
-    <div style={{
-      position: "fixed", inset: 0, zIndex: 2000,
-      background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)",
-      display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
-    }}>
-      <div style={{
-        background: "linear-gradient(135deg,#0d0520,#1a0a2e)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: 16, padding: 20, width: "100%", maxWidth: 360,
-        maxHeight: "80vh", overflowY: "auto",
-      }}>
+    <div style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(10px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div style={{ background: "linear-gradient(135deg,#0d0520,#1a0a2e)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 16, padding: 20, width: "100%", maxWidth: 360, maxHeight: "80vh", overflowY: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <div style={{
-            fontSize: 16, fontWeight: "bold",
-            background: "linear-gradient(90deg,#FFC93C,#FF8E53)",
-            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-          }}>LEADERBOARD</div>
+          <div style={{ fontSize: 16, fontWeight: "bold", background: "linear-gradient(90deg,#FFC93C,#FF8E53)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>LEADERBOARD</div>
           <button onClick={onClose} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", cursor: "pointer", fontSize: 20 }}>x</button>
         </div>
         {isLoading && <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: 20 }}>Loading...</div>}
         {error && <div style={{ textAlign: "center", color: "#FF6B6B", padding: 20, fontSize: 12 }}>Failed to load.</div>}
         {data && data.length === 0 && <div style={{ textAlign: "center", color: "rgba(255,255,255,0.4)", padding: 20 }}>No records yet!</div>}
         {data && data.map((entry, i) => (
-          <div key={i} style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "10px 12px", marginBottom: 6, borderRadius: 10,
-            background: i === 0 ? "rgba(255,215,0,0.15)" : i === 1 ? "rgba(192,192,192,0.1)" : i === 2 ? "rgba(205,127,50,0.1)" : "rgba(255,255,255,0.04)",
-            border: "1px solid " + (i === 0 ? "rgba(255,215,0,0.3)" : i === 1 ? "rgba(192,192,192,0.2)" : i === 2 ? "rgba(205,127,50,0.2)" : "rgba(255,255,255,0.06)"),
-          }}>
+          <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 12px", marginBottom: 6, borderRadius: 10, background: i === 0 ? "rgba(255,215,0,0.15)" : i === 1 ? "rgba(192,192,192,0.1)" : i === 2 ? "rgba(205,127,50,0.1)" : "rgba(255,255,255,0.04)", border: "1px solid " + (i === 0 ? "rgba(255,215,0,0.3)" : i === 1 ? "rgba(192,192,192,0.2)" : i === 2 ? "rgba(205,127,50,0.2)" : "rgba(255,255,255,0.06)") }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <span style={{ fontSize: 18, minWidth: 28 }}>{medals[i] || (i + 1) + "."}</span>
               <div>
@@ -97,11 +81,7 @@ function Leaderboard({ onClose }) {
                 <div style={{ fontSize: 9, color: "rgba(255,255,255,0.3)" }}>{entry.player.slice(0, 6)}...{entry.player.slice(-4)}</div>
               </div>
             </div>
-            <div style={{
-              fontSize: 22, fontWeight: 900,
-              background: "linear-gradient(180deg,#fff,#FFC93C)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            }}>{entry.score.toString()}</div>
+            <div style={{ fontSize: 22, fontWeight: 900, background: "linear-gradient(180deg,#fff,#FFC93C)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>{entry.score.toString()}</div>
           </div>
         ))}
       </div>
@@ -109,13 +89,19 @@ function Leaderboard({ onClose }) {
   );
 }
 
-function ConnectModal({ onClose }) {
+function ConnectModal({ onClose, isFarcaster }) {
   const { connect } = useConnect();
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ background: "#0d0520", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 16, padding: 24, width: 280, textAlign: "center" }}>
         <div style={{ fontSize: 14, fontWeight: "bold", marginBottom: 20, color: "#fff" }}>Select Wallet</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+          {isFarcaster && (
+            <button style={walletBtn("#8B5CF6")}
+              onClick={() => { connect({ connector: farcasterMiniApp() }); onClose(); }}>
+              🟣 Farcaster Wallet
+            </button>
+          )}
           <button style={walletBtn("#4D96FF")} onClick={() => { connect({ connector: injected() }); onClose(); }}>MetaMask / Brave / Rabby</button>
           <button style={walletBtn("#0052FF")} onClick={() => { connect({ connector: coinbaseWallet({ appName: "Tile Stack", preference: "all" }) }); onClose(); }}>Coinbase Wallet</button>
           <button style={walletBtn("#3B99FC")} onClick={() => { connect({ connector: walletConnect({ projectId: PROJECT_ID }) }); onClose(); }}>WalletConnect</button>
@@ -126,7 +112,7 @@ function ConnectModal({ onClose }) {
   );
 }
 
-function WalletSection({ score, nickname, setNickname }) {
+function WalletSection({ score, nickname, setNickname, isFarcaster }) {
   const { address, isConnected, chain } = useAccount();
   const { data: walletClient, refetch: refetchWallet } = useWalletClient();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
@@ -156,7 +142,7 @@ function WalletSection({ score, nickname, setNickname }) {
 
   return (
     <>
-      {showModal && <ConnectModal onClose={() => setShowModal(false)} />}
+      {showModal && <ConnectModal onClose={() => setShowModal(false)} isFarcaster={isFarcaster} />}
       <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, padding: "12px 16px", marginBottom: 16, width: "100%", maxWidth: 240, textAlign: "center" }}>
         <div style={{ fontSize: 10, letterSpacing: "0.2em", marginBottom: 10, background: "linear-gradient(90deg,#4CC9F0,#4D96FF)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>ON-CHAIN SUBMIT</div>
         <input value={nickname} onChange={e => setNickname(e.target.value.slice(0, 12))} placeholder="Nickname" style={inputStyle} />
@@ -197,6 +183,30 @@ export default function TileStackGame() {
   const [bestLocal, setBestLocal] = useState(0);
   const [nickname, setNickname] = useState("");
   const [showBoard, setShowBoard] = useState(false);
+  const [isFarcaster, setIsFarcaster] = useState(false);
+  const [fcUser, setFcUser] = useState(null);
+  const [isReady, setIsReady] = useState(false);
+
+  // Farcaster SDK 初期化
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const context = await sdk.context;
+        if (context?.user) {
+          setIsFarcaster(true);
+          setFcUser(context.user);
+          if (context.user.displayName || context.user.username) {
+            setNickname((context.user.displayName || context.user.username).slice(0, 12));
+          }
+        }
+        await sdk.actions.ready();
+      } catch (e) {
+        console.log("Not in Farcaster context");
+      }
+      setIsReady(true);
+    };
+    init();
+  }, []);
 
   const drawTile = useCallback((ctx, x, y, w, h, gc, alpha = 1) => {
     if (w <= 0) return;
@@ -225,14 +235,10 @@ export default function TileStackGame() {
     bgTickRef.current += 0.004;
     const t = bgTickRef.current;
 
-    // カメラオフセット計算（スムーズスクロール）
-    const targetCameraY = s.stack.length > SCROLL_THRESHOLD
-      ? (s.stack.length - SCROLL_THRESHOLD) * TILE_H
-      : 0;
+    const targetCameraY = s.stack.length > SCROLL_THRESHOLD ? (s.stack.length - SCROLL_THRESHOLD) * TILE_H : 0;
     cameraYRef.current += (targetCameraY - cameraYRef.current) * 0.1;
     const camY = cameraYRef.current;
 
-    // 背景
     const grad = ctx.createLinearGradient(0, 0, CANVAS_W, CANVAS_H);
     grad.addColorStop(0, "hsl(" + ((t * 30) % 360) + ",70%,8%)");
     grad.addColorStop(0.5, "hsl(" + ((t * 30 + 120) % 360) + ",60%,10%)");
@@ -245,7 +251,6 @@ export default function TileStackGame() {
       ctx.fill();
     });
 
-    // カメラ適用
     ctx.save();
     ctx.translate(0, camY);
 
@@ -253,7 +258,6 @@ export default function TileStackGame() {
       drawTile(ctx, tile.x, CANVAS_H - BASE_H - (i + 1) * TILE_H, tile.w, TILE_H, tile.grad);
     });
 
-    // ベース
     const baseGrad = ctx.createLinearGradient(0, 0, CANVAS_W, 0);
     baseGrad.addColorStop(0, "#FF6B6B"); baseGrad.addColorStop(0.2, "#FFC93C");
     baseGrad.addColorStop(0.4, "#6BCB77"); baseGrad.addColorStop(0.6, "#4D96FF");
@@ -265,7 +269,6 @@ export default function TileStackGame() {
     ctx.fillStyle = "rgba(0,0,0,0.55)"; ctx.font = "bold 11px monospace"; ctx.textAlign = "center";
     ctx.fillText("BASE", CANVAS_W / 2, CANVAS_H - BASE_H / 2 + 4);
 
-    // 動くタイル
     if (s.moving) {
       const mt = s.moving;
       const y = CANVAS_H - BASE_H - (s.stack.length + 1) * TILE_H;
@@ -276,15 +279,13 @@ export default function TileStackGame() {
       ctx.fillText("TAP", CANVAS_W / 2, y - 9);
     }
 
-    ctx.restore(); // カメラ解除
+    ctx.restore();
 
-    // UI固定表示
     ctx.fillStyle = "#fff"; ctx.font = "bold 26px monospace"; ctx.textAlign = "left";
     ctx.fillText(s.stack.length + " tiles", 14, 40);
     ctx.fillStyle = "rgba(255,220,100,0.7)"; ctx.font = "11px monospace";
     ctx.fillText("BEST " + s.best, 14, 60);
 
-    // 高さインジケーター
     if (s.stack.length > SCROLL_THRESHOLD) {
       ctx.fillStyle = "rgba(100,200,255,0.6)";
       ctx.font = "10px monospace"; ctx.textAlign = "right";
@@ -377,13 +378,26 @@ export default function TileStackGame() {
     return () => cancelAnimationFrame(raf);
   }, [phase]);
 
+  if (!isReady) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#050510", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ color: "#4D96FF", fontFamily: "monospace", fontSize: 14 }}>Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "linear-gradient(135deg,#050510 0%,#0d0520 50%,#100515 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", fontFamily: "monospace", color: "#fff", padding: "16px" }}>
       {showBoard && <Leaderboard onClose={() => setShowBoard(false)} />}
 
       <div style={{ marginBottom: 14, textAlign: "center" }}>
         <div style={{ fontSize: 30, fontWeight: "900", letterSpacing: "0.2em", background: "linear-gradient(90deg,#FF6B6B,#FFC93C,#69FF47,#4D96FF,#E040FB,#FF6B6B)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", filter: "drop-shadow(0 0 14px rgba(200,130,255,0.5))" }}>TILE STACK</div>
-        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: "0.35em", marginTop: 3 }}>ON-CHAIN LEADERBOARD EDITION</div>
+        {fcUser && (
+          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginTop: 2 }}>
+            Welcome, {fcUser.displayName || fcUser.username}!
+          </div>
+        )}
+        <div style={{ fontSize: 10, color: "rgba(255,255,255,0.3)", letterSpacing: "0.35em", marginTop: 2 }}>ON-CHAIN LEADERBOARD EDITION</div>
       </div>
 
       <div style={{ position: "relative" }}>
@@ -411,7 +425,7 @@ export default function TileStackGame() {
             <div style={{ fontSize: 64, fontWeight: 900, lineHeight: 1, marginBottom: 2, background: "linear-gradient(180deg,#fff,#FFD700)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", filter: "drop-shadow(0 0 20px rgba(255,215,0,0.7))" }}>{score}</div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>TILES STACKED</div>
             <div style={{ fontSize: 13, color: "#FFC93C", marginBottom: 16 }}>BEST {bestLocal}</div>
-            <WalletSection score={score} nickname={nickname} setNickname={setNickname} />
+            <WalletSection score={score} nickname={nickname} setNickname={setNickname} isFarcaster={isFarcaster} />
             <div style={{ display: "flex", gap: 10 }}>
               <button style={glowBtn("#4D96FF", "#2962FF")} onClick={startGame}>RETRY</button>
               <button style={glowBtn("#FFC93C", "#FF8E53")} onClick={() => setShowBoard(true)}>RANKING</button>
