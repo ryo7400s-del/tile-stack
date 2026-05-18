@@ -437,4 +437,4 @@ function glowBtn(c1, c2) {
   return { background: "linear-gradient(135deg," + c1 + "," + c2 + ")", border: "none", borderRadius: 8, color: "#fff", fontFamily: "monospace", fontWeight: "bold", fontSize: 13, padding: "10px 22px", cursor: "pointer", boxShadow: "0 0 22px " + c1 + "66, 0 2px 8px rgba(0,0,0,0.4)" };
 }
 EOF
-echo "done"
+
