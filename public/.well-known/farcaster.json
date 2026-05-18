@@ -7,14 +7,14 @@
   "frame": {
     "version": "1",
     "name": "Tile Stack",
-    "iconUrl": "https://tile-stack.vercel.app/vite.svg",
+    "iconUrl": "https://tile-stack.vercel.app/icon.jpg",
     "homeUrl": "https://tile-stack.vercel.app",
-    "imageUrl": "https://tile-stack.vercel.app/vite.svg",
+    "imageUrl": "https://tile-stack.vercel.app/icon.jpg",
     "screenshotUrls": [],
     "tags": ["game", "onchain", "base"],
     "primaryCategory": "games",
     "buttonTitle": "Play Tile Stack",
-    "splashImageUrl": "https://tile-stack.vercel.app/vite.svg",
+    "splashImageUrl": "https://tile-stack.vercel.app/icon.jpg",
     "splashBackgroundColor": "#0d0520"
   }
 }
