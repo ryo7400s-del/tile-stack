@@ -1,4 +1,3 @@
-cat > /mnt/user-data/outputs/App.jsx << 'EOF'
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useAccount, useWalletClient, useSwitchChain, useConnect, useDisconnect, useReadContract } from "wagmi";
 import { encodeFunctionData } from "viem";
