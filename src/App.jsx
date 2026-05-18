@@ -408,7 +408,7 @@ export default function TileStackGame() {
         {phase === "over" && (
           <div style={overlayStyle}>
             <div style={{ fontSize: 14, letterSpacing: "0.25em", marginBottom: 6, background: "linear-gradient(90deg,#FF6B6B,#FF1744)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>GAME OVER</div>
-             <div style={{ fontSize: 64, fontWeight: 900, lineHeight: 1, marginBottom: 2, background: "linear-gradient(180deg,#fff,#FFD700)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", filter: "drop-shadow(0 0 20px rgba(255,215,0,0.7))" }}>{score}</div>
+            <div style={{ fontSize: 64, fontWeight: 900, lineHeight: 1, marginBottom: 2, background: "linear-gradient(180deg,#fff,#FFD700)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", filter: "drop-shadow(0 0 20px rgba(255,215,0,0.7))" }}>{score}</div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>TILES STACKED</div>
             <div style={{ fontSize: 13, color: "#FFC93C", marginBottom: 16 }}>BEST {bestLocal}</div>
             <WalletSection score={score} nickname={nickname} setNickname={setNickname} />
