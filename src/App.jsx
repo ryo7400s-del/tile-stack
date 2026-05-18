@@ -408,4 +408,31 @@ export default function TileStackGame() {
         {phase === "over" && (
           <div style={overlayStyle}>
             <div style={{ fontSize: 14, letterSpacing: "0.25em", marginBottom: 6, background: "linear-gradient(90deg,#FF6B6B,#FF1744)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>GAME OVER</div>
-            
+             <div style={{ fontSize: 64, fontWeight: 900, lineHeight: 1, marginBottom: 2, background: "linear-gradient(180deg,#fff,#FFD700)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", filter: "drop-shadow(0 0 20px rgba(255,215,0,0.7))" }}>{score}</div>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>TILES STACKED</div>
+            <div style={{ fontSize: 13, color: "#FFC93C", marginBottom: 16 }}>BEST {bestLocal}</div>
+            <WalletSection score={score} nickname={nickname} setNickname={setNickname} />
+            <div style={{ display: "flex", gap: 10 }}>
+              <button style={glowBtn("#4D96FF", "#2962FF")} onClick={startGame}>RETRY</button>
+              <button style={glowBtn("#FFC93C", "#FF8E53")} onClick={() => setShowBoard(true)}>RANKING</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {phase === "playing" && (
+        <div style={{ marginTop: 10, fontSize: 11, color: "rgba(255,255,255,0.4)" }}>Tap / Click / Space to DROP</div>
+      )}
+    </div>
+  );
+}
+
+const overlayStyle = { position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(5,3,18,0.86)", backdropFilter: "blur(6px)", borderRadius: 14, color: "#fff", textAlign: "center", padding: 22 };
+const inputStyle = { background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 6, color: "#fff", fontFamily: "monospace", fontSize: 13, padding: "8px 12px", marginBottom: 14, outline: "none", textAlign: "center", width: "180px" };
+
+function walletBtn(color) {
+  return { background: "rgba(255,255,255,0.06)", border: "1px solid " + color + "66", borderRadius: 8, color: "#fff", fontFamily: "monospace", fontSize: 12, padding: "12px 16px", cursor: "pointer", textAlign: "left", width: "100%", boxShadow: "0 0 12px " + color + "33" };
+}
+function glowBtn(c1, c2) {
+  return { background: "linear-gradient(135deg," + c1 + "," + c2 + ")", border: "none", borderRadius: 8, color: "#fff", fontFamily: "monospace", fontWeight: "bold", fontSize: 13, padding: "10px 22px", cursor: "pointer", boxShadow: "0 0 22px " + c1 + "66, 0 2px 8px rgba(0,0,0,0.4)" };
+}
